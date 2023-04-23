@@ -55,7 +55,7 @@ async function isAdmin(req, res, next) {
     user.name = req.user.displayName;
     await user.save();
     const role = userData.role;
-    userData.role && role == "admin" ? next() : res.redirect("/pay_fees");
+    userData.role && role == "admin" ? next() : res.redirect("/profile");
   }
 }
 
@@ -152,6 +152,56 @@ function convertToLower(str) {
   return str.replace(/[A-Z]/g, (match) => match.toLowerCase());
 }
 
+async function calculateDashboardData(dashboardData) {
+  const users = await User.find({});
+  for (let user of users) {
+    for (let sem of user.semester) {
+      if (sem.feeStatus == "pending") {
+        dashboardData.feesPending += sem.amount;
+      } else {
+        dashboardData.feesPaid += sem.amount;
+        if (sem.feeType == "Semester") {
+          dashboardData.chart2Data[0] += sem.amount;
+        } else if (sem.feeType == "Mess") {
+          dashboardData.chart2Data[1] += sem.amount;
+        } else if (sem.feeType == "Fine") {
+          dashboardData.chart2Data[2] += sem.amount;
+        }
+      }
+    }
+  }
+}
+
+async function calculateMonthlyData(dashboardData) {
+  const users = await User.find({});
+  for (let user of users) {
+    for (let sem of user.semester) {
+      if (sem.feeStatus == "paid") {
+        let idx = sem.paymentDate.slice(5, 7);
+        idx = parseInt(idx) - 1;
+        dashboardData.monthlyFeesCollected[idx] += sem.amount;
+      }
+    }
+  }
+}
+
+async function calculateProfileData(profileData, email) {
+  const user = await User.findOne({ email: email });
+  for (let sem of user.semester) {
+    if (sem.feeStatus == "paid") {
+      profileData.feesPaid += sem.amount;
+    } else {
+      profileData.feesPending += sem.amount;
+    }
+
+    if (sem.feeType == "Fine" || sem.fineAmount > 0) {
+      profileData.fineNumber += 1;
+      profileData.fineAmount += sem.fineAmount;
+    }
+    if (sem.feeType == "Fine") profileData.fineAmount += sem.amount;
+  }
+}
+
 //Admin Panel
 app.get("/dashboard", [isLoggedIn, isAdmin], async (req, res) => {
   const batches = await Batch.find({});
@@ -163,6 +213,16 @@ app.get("/dashboard", [isLoggedIn, isAdmin], async (req, res) => {
   let { displayName, email } = req.user;
   email = convertToLower(email);
   const rollNumber = email.slice(0, email.indexOf("@"));
+  let dashboardData = {
+    feesPending: 0,
+    feesPaid: 0,
+    chart2Data: [0, 0, 0], //[semesterPaid,messPaid,finePaid]
+    monthlyFeesCollected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // jan to dec
+  };
+
+  await calculateDashboardData(dashboardData);
+  await calculateMonthlyData(dashboardData);
+
   res.render("Admin/dashboard", {
     userName: displayName,
     email: email,
@@ -170,6 +230,7 @@ app.get("/dashboard", [isLoggedIn, isAdmin], async (req, res) => {
     semester: semester,
     batchSize,
     totalStudents,
+    dashboardData,
   });
 });
 
@@ -213,7 +274,6 @@ app.post(
   [isLoggedIn, isAdmin, upload.single("reciept")],
   async (req, res) => {
     let { SBIref, paymentDate, transID, email } = req.body;
-    console.log(req.file);
     email = convertToLower(email);
     paymentDate = convertDateFormat(paymentDate);
     const rollNumber = email.slice(0, email.indexOf("@"));
@@ -319,11 +379,9 @@ app.post(
     roll = convertToLower(roll);
     dueDate = convertDateFormat(dueDate);
     if (roll == "") {
-      console.log("empty roll");
       const batch = await Batch.findOne({ batch: branch });
       const batch_strength = batch.batchStrength;
       const roll_prefix = batch.rollPrefix;
-      console.log(batch, batch_strength, roll_prefix);
       for (let i = 1; i <= batch_strength; i++) {
         let email = roll_prefix + i + "@iiitl.ac.in";
         let roll = roll_prefix + i;
@@ -354,7 +412,6 @@ app.post(
         );
       }
     } else {
-      console.log("non empty roll");
       const email = roll + "@iiitl.ac.in";
       await User.findOneAndUpdate(
         {
@@ -462,7 +519,6 @@ app.get("/answer_queries/", [isLoggedIn, isAdmin], async (req, res) => {
 
 app.post("/answer_queries/", [isLoggedIn, isAdmin], async (req, res) => {
   const { message, textEmail } = req.body;
-  console.log(textEmail);
   const { email } = req.user;
   await Chat.findOneAndUpdate(
     {
@@ -488,7 +544,6 @@ app.post("/answer_queries/", [isLoggedIn, isAdmin], async (req, res) => {
 
 app.post("/deleteChat/", [isLoggedIn, isAdmin], async (req, res) => {
   const { textEmail } = req.body;
-  console.log(textEmail);
   const chats = await Chat.findOne({
     senderEmail: textEmail,
   });
@@ -499,15 +554,23 @@ app.post("/deleteChat/", [isLoggedIn, isAdmin], async (req, res) => {
 });
 
 //Student Panel
-app.get("/profile/", isLoggedIn, (req, res) => {
+app.get("/profile/", isLoggedIn, async (req, res) => {
   let { displayName, email, picture } = req.user;
   email = convertToLower(email);
   const rollNumber = email.slice(0, email.indexOf("@"));
+  let profileData = {
+    feesPaid: 0,
+    fineAmount: 0,
+    feesPending: 0,
+    fineNumber: 0,
+  };
+  await calculateProfileData(profileData, email);
   res.render("Student/profile", {
     userName: displayName,
     email,
     rollNumber,
     picture,
+    profileData,
   });
 });
 
@@ -582,9 +645,6 @@ app.get("/chat/", isLoggedIn, async (req, res) => {
   let messages = await Chat.findOne({ senderEmail: email }).populate({
     path: "chat",
   });
-  let unreadCount = await Chat.findOne({ senderEmail: email });
-  console.log(unreadCount);
-  // unreadCount = unreadCount.unreadCount;
   if (messages) {
     messages = messages.chat;
   } else {
@@ -598,7 +658,6 @@ app.get("/chat/", isLoggedIn, async (req, res) => {
     rollNumber,
     picture,
     messages,
-    unreadCount,
   });
 });
 

@@ -48,20 +48,24 @@
                             </div>
                             <div class="card">
                                 <div class="card-content">
-                                    <div class="number"><i class="bx bx-rupee"></i>3250</div>
+                                    <div class="number"><i class="bx bx-rupee"></i>
+                                        <%= dashboardData.feesPending %>
+                                    </div>
                                     <div class="card-name">Fees Pending</div>
                                 </div>
                                 <div class="icon-box">
-                                    <i class="bx bx-rupee"></i>
+                                    <i class="bx"></i>
                                 </div>
                             </div>
                             <div class="card">
                                 <div class="card-content">
-                                    <div class="number"><i class="bx bx-rupee"></i>74520</div>
+                                    <div class="number"><i class="bx bx-rupee"></i>
+                                        <%= dashboardData.feesPaid %>
+                                    </div>
                                     <div class="card-name">Fees Paid</div>
                                 </div>
                                 <div class="icon-box">
-                                    <i class="bx bx-rupee"></i>
+                                    <i class="bx"></i>
                                 </div>
                             </div>
                         </div>
@@ -90,11 +94,40 @@
             crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
         <script src="/scripts/sidebar.js"></script>
-        <script src="/Admin/Charts/chart1.js"></script>
+        <!-- <script src="/Admin/Charts/chart1.js"></script> -->
+        <!-- chart 2 -->
         <script>
+            let ctx2 = document.getElementById("doughnut").getContext("2d");
+            let myChart2 = new Chart(ctx2, {
+                type: "doughnut",
+                data: {
+                    labels: ["Semester", "Messs", "Fine or Due"],
+                    datasets: [
+                        {
+                            label: "Fees Type",
+                            data: [<%= dashboardData.chart2Data %>],
+                            backgroundColor: [
+                                "rgba(54, 162, 235, 1)",
+                                "rgba(41, 155, 99, 1)",
+                                "rgba(255, 206, 86, 1)",
+                            ],
+                            borderColor: [
+                                "rgba(54, 162, 235, 1)",
+                                "rgba(41, 155, 99, 1)",
+                                "rgba(255, 206, 86, 1)",
+                            ],
+                            borderWidth: 1,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                },
+            });
 
         </script>
-        <script src="/Admin/Charts/chart2.js">
+        <!-- chart 1 -->
+        <script>
             let ctx = document.getElementById("lineChart").getContext("2d");
             let myChart = new Chart(ctx, {
                 type: "line",
@@ -117,8 +150,7 @@
                         {
                             label: "Earnings in ₹",
                             data: [
-                                205067, 190011, 21006, 28009, 18002, 200000, 250000, 26006, 24502, 19504, 23004,
-                                290044,
+                               <%=  dashboardData.monthlyFeesCollected %>
                             ],
                             backgroundColor: ["rgba(85,85,85, 1)"],
                             borderColor: "rgb(41, 155, 99)",
