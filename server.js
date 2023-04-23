@@ -16,8 +16,10 @@ const semester = require("./views/Admin/SemesterData.js");
 const CronJob = require("cron").CronJob;
 app.use(express.json());
 
+const dbUrl =
+  process.env.DB_URL || "mongodb://127.0.0.1:27017/IIITL_Fee_Portal";
 mongoose
-  .connect("mongodb://127.0.0.1:27017/IIITL_Fee_Portal", {
+  .connect(dbUrl, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
