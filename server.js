@@ -124,7 +124,7 @@ app.get("/", (req, res) => {
 
 //google login
 app.get(
-  "/auth/10000/auth/google",
+  "/auth/google",
   passport.authenticate("google", {
     scope: ["email", "profile"],
     hostedDomain: "iiitl.ac.in",
