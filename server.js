@@ -124,7 +124,7 @@ app.get("/", (req, res) => {
 
 //google login
 app.get(
-  "/auth/google",
+  "/auth/10000/auth/google",
   passport.authenticate("google", {
     scope: ["email", "profile"],
     hostedDomain: "iiitl.ac.in",
@@ -132,7 +132,7 @@ app.get(
 );
 
 app.get(
-  "/auth/google/callback",
+  "/auth/10000/auth/google/callback",
   passport.authenticate("google", {
     successRedirect: "/auth/protected",
     failureRedirect: "/auth/google/failure",
