@@ -132,7 +132,7 @@ app.get(
 );
 
 app.get(
-  "/auth/10000/auth/google/callback",
+  "/auth/google/callback",
   passport.authenticate("google", {
     successRedirect: "/auth/protected",
     failureRedirect: "/auth/google/failure",
