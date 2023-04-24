@@ -24,7 +24,7 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex:true,
-    useFindAndModify:false,
+   
 
   })
   .then(() => {
@@ -32,7 +32,7 @@ mongoose
     console.log("connection open ");
   })
   .catch((err) => {
-    console.log("Error occurs");
+    console.log("Error occurs" , err);
   });
 
 const PORT = process.env.PORT || 5000;
@@ -141,7 +141,8 @@ app.get(
   passport.authenticate("google", {
     successRedirect: "/auth/protected",
     failureRedirect: "/auth/google/failure",
-  })
+  },
+  
 );
 
 app.get("/auth/google/failure", (req, res) => {
