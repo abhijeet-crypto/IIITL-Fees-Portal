@@ -141,7 +141,7 @@ app.get(
   passport.authenticate("google", {
     successRedirect: "/auth/protected",
     failureRedirect: "/auth/google/failure",
-  },
+  })
   
 );
 
