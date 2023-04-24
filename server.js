@@ -15,6 +15,7 @@ const upload = multer({ storage });
 const semester = require("./views/Admin/SemesterData.js");
 const CronJob = require("cron").CronJob;
 app.use(express.json());
+require("dotenv").config();
 
 const dbUrl =
   process.env.DB_URL || "mongodb://127.0.0.1:27017/IIITL_Fee_Portal";
@@ -24,6 +25,7 @@ mongoose
     useUnifiedTopology: true,
   })
   .then(() => {
+    
     console.log("connection open ");
   })
   .catch((err) => {
